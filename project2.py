@@ -1,30 +1,29 @@
 import matplotlib.pyplot as plt
 
-# Функция для расчета разделеннх разностей
-def f(x, y):
-    if len(x) == 2 and len(y) == 2:
-        return (y[1] - y[0]) / (x[1] - x[0])
-    elif len(x) < 2 and len(y) < 2:
-        return y[0]
-    return (f(x[1:], y[1:]) - f(x[:-1], y[:-1])) / (x[-1] - x[0])
 
 #Вспомогательная функция для расчета всех необходимых разделенных разностей для интерполирования назад
 def dif(x, y):
-    x1 = x[::-1]
-    y1 = y[::-1]
-    answer = []
-    for i in range(1, len(x) + 1):
-        answer.append(f(x1[:i], y1[:i]))
-    return answer
+    n = len(x)
+    coef = y.copy()  
+    
+    for j in range(1, n):
+        for i in range(n - 1, j - 1, -1):
+            coef[i] = (coef[i] - coef[i - 1]) / (x[i] - x[i - j])
+    return coef
 
-
-
-
-
-#Функция ввода
+def L(x1, y1, x):
+    x_data = x1[::-1]
+    y_data = y1[::-1]
+    coef = dif(x_data, y_data)
+    n = len(coef) - 1
+    result = coef[n]
+    
+    for k in range(1, n + 1):
+        result = coef[n - k] + (x - x_data[n - k]) * result
+    return result
 
 # Интерполированиe назад
-def L(x, y, difr, x0):
+""" def L(x, y, difr, x0):
     x = x[::-1]
     y = y[::-1]
     a = 1
@@ -33,14 +32,54 @@ def L(x, y, difr, x0):
         a *= (x0-x[i])
         answer += a * difr[i]
     return answer
+ """
+
+#Функция ввода
+def input(file):
+    x = []
+    y = []
+    try:
+        f = open(file, 'r')
+        x = list(map(float, f.readline().split()))
+        y = list(map(float, f.readline().split()))
+    except Exception:
+        print("Ошибка ввода")
+        exit()
+    f.close()
+    if len(x) != len(y):
+        print("Ошибка ввода")
+        exit()
+    return (x, y)
 
 
-x = [0, 1, 2]
-x = x[::-1]
-print(x[0:3])
-x = []
-y = []
-y = [i**2 for i in x]
+
+#Разбиение оси абсцисс
+def splitX(x, s):
+    answer = [x[0]]
+    a = x[0]
+    while a < x[-1]:
+        a += s
+        answer.append(a)
+    return answer
+
+
+file = 'C:/Users/NND01/Desktop/pr2/in.txt'
+x, y = input(file)
+
+
+answerX = splitX(x, 0.1)
+
+answerY = []
+for i in answerX:
+    answerY.append(L(x, y, i))
+
+
+
 plt.figure()
-plt.plot(x, y)
+plt.plot(answerX, answerY, 'r')
+plt.plot(x, y, 'g')
+plt.legend([u'Результат', u'Исходные данные'])
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title(u'Интерполирование назад')
 plt.show()
