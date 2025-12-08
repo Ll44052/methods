@@ -1,0 +1,98 @@
+import math
+
+# x**3 + 2x**2 - 1 (ответ: -1.618, -1, 0.618)
+# x**3 + 2x
+
+# Исходная функция
+def f(x):
+    return x**3 + 2*x**2 - 1
+
+
+
+# Производная
+def df(x):
+    d = 1e-10
+    return (f(x + d) - f(x)) / d
+
+# Метод Ньютона (один шаг)
+def newton_step(x):
+    return x - f(x) / df(x)
+
+# Процесс Эйткена Δ²
+def aitken(x0, x1, x2):
+    denom = x2 - 2*x1 + x0
+    if denom == 0:
+        return x2
+    return x0 - (x1 - x0)**2 / denom
+
+# Разбиение оси
+def splitX(a, b, s):
+    xs = []
+    x = a
+    while x <= b:
+        xs.append(x)
+        x = round(x + s, 10)
+    return xs
+
+# Поиск интервалов
+def findInterval(a, b, s=0.1):
+    xs = splitX(a, b, s)
+    intervals = []
+    for i in range(1, len(xs)):
+        f1, f2 = f(xs[i-1]), f(xs[i])
+        if f1 == 0:
+            intervals.append((xs[i-1], xs[i-1]))
+        elif f2 == 0:
+            intervals.append((xs[i], xs[i]))
+        elif f1 * f2 < 0:
+            intervals.append((xs[i-1], xs[i]))
+    return intervals
+
+def merge(a, eps=1e-2):
+    a = sorted(a)
+    out = []
+    cur = a[0]
+    for r in a[1:]:
+        if abs(r - cur) < eps:
+            continue
+        out.append(cur)
+        cur = r
+    out.append(cur)
+    return out
+
+# Главный алгоритм
+def find_roots(a, b, eps=1e-6, s=0.1):
+    intervals = findInterval(a, b, s)
+    roots = []
+
+    for L, R in intervals:
+        
+        x0 = (L + R) / 2
+        x1 = newton_step(x0)
+        x2 = newton_step(x1)
+
+        while True:
+            
+            xa = aitken(x0, x1, x2)
+            x3 = newton_step(xa)
+
+            if abs(x3 - xa) < eps or abs(f(x3)) < eps:
+                roots.append(x3)
+                break
+
+            
+            x0, x1, x2 = x1, x2, x3
+
+    return merge(roots)
+
+
+
+a, b = map(float, input("Введите [a b]: ").split())
+eps = float(input("Введите точность: "))
+s = float(input("Введите шаг разбиения: "))
+
+roots = find_roots(a, b, eps, s)
+
+print("Корни уравнения:")
+for r in roots:
+    print(round(r, 6))
