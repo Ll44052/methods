@@ -1,0 +1,99 @@
+
+  #include <iostream>
+  #include <cmath>
+  #include <vector>
+  using namespace std;
+  
+  double f1(double x) {
+      return x * x * x - 10 * x;
+  }
+  
+  double findOneRoot(double (*f)(double), double a, double b, double eps) {
+      double fa = f(a);
+      double fb = f(b);
+  
+      if (fa * fb > 0) {
+          return NAN; 
+      }
+  
+      while (b - a > eps) {
+          double c = (a + b) / 2;
+          double fc = f(c);
+  
+          if (fc == 0) return c;
+  
+          if (fa * fc < 0) {
+              b = c;
+              fb = fc;
+          }
+          else {
+              a = c;
+              fa = fc;
+          }
+      }
+  
+      return (a + b) / 2;
+  }
+  
+  // Поиск всех корней на отрезке [a, b]
+  vector<double> findAllRoots(
+      double (*f)(double),  
+      double a,             
+      double b,             
+      double eps,           
+      double step           
+  ) {
+      vector<double> roots;
+  
+      double x = a;
+      double fx_prev = f(x);
+  
+      // рассматриваем весь отрезок с заданным шагом
+      while (x < b) {
+          double x_next = x + step;
+          if (x_next > b) x_next = b;
+  
+          double fx_next = f(x_next);
+  
+          // Если функция меняет знак - есть корень на [x, x_next]
+          if (fx_prev * fx_next <= 0) {
+              double root = findOneRoot(f, x, x_next, eps);
+  
+              if (!std::isnan(root)) {
+                  // Проверяем, не нашли ли мы уже этот корень
+                  bool isNew = true;
+                  for (double r : roots) {
+                      if (fabs(r - root) < eps * 10) {
+                          isNew = false;
+                          break;
+                      }
+                  }
+  
+                  if (isNew) {
+                      roots.push_back(root);
+                  }
+              }
+          }
+  
+          x = x_next;
+          fx_prev = fx_next;
+      }
+  
+      return roots;
+  }
+  
+  int main() {
+      setlocale(LC_ALL, "Russian");
+      double (*f)(double) = f1;
+      double a, b, eps;
+      cout << "Введите отрезок[a, b]: ";
+      cin >> a >> b;
+      cout << "Введите погрешность: ";
+      cin >> eps;
+      vector<double> answer = findAllRoots(f, a, b, eps, 0.01);
+      cout << "Корни уравнения: ";
+      for (auto x : answer) {
+          cout << round(x * pow(10, 4)) / pow(10, 4) << '; ';
+      }
+      return 0;
+}
