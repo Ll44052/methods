@@ -1,0 +1,32 @@
+#include <iostream>
+using namespace std;
+
+double f(double x) {
+    return x;
+}
+
+double trapezoid(double a, double b, int n = 1000) {
+    if (a == b)
+        return 0;
+
+    double h = (b - a) / n;  
+    double s = (f(a) + f(b)) / 2.0;
+
+    for (int i = 1; i < n; i++) {
+        double x = a + i * h;
+        s += f(x);
+    }
+
+    return s * h;
+}
+
+int main()
+{
+    setlocale(LC_ALL, "rus");
+    double a, b;
+    cout << "Введите пределы интегрирования: ";
+    cin >> a >> b;
+    cout << "Введите n: ";
+    int n;
+    cin >> n;
+    cout << trapezoid(a, b, n);
