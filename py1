@@ -1,0 +1,23 @@
+s = input()
+S_CONST = s
+
+
+
+k = 0
+while s != '.':
+    s = s.replace(s[0], '')
+    k += 1
+aver = (len(S_CONST) - 1) / k
+
+s = S_CONST
+answer = []
+
+while s != '.':
+    k = s.count(s[0])
+    if k < aver and k > 1:
+        answer.append(s[0])
+    s = s.replace(s[0], '')
+answer.sort()
+
+
+print(answer)
