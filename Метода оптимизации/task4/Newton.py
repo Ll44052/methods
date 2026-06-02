@@ -1,0 +1,113 @@
+import numpy as np
+def f(x):
+    x1, x2 = x
+    return x1 ** 2 + 4 * x2 ** 2 - x1 * x2 + x1
+
+def grad(x, h = 1e-5):
+    x1, x2 = x
+    g1 = (f([x1 + h, x2]) - f([x1, x2])) / h
+    g2 = (f([x1, x2 + h]) - f([x1, x2])) / h
+    return np.array([g1, g2])
+
+
+def hessian(x, h=1e-4):
+    n = len(x)
+    H = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                xp = np.array(x, dtype=float)
+                xm = np.array(x, dtype=float)
+                xp[i] += h
+                xm[i] -= h
+                H[i, i] = (
+                    f(xp)
+                    - 2*f(x)
+                    + f(xm)
+                ) / h**2
+            else:
+                xpp = np.array(x, dtype=float)
+                xpm = np.array(x, dtype=float)
+                xmp = np.array(x, dtype=float)
+                xmm = np.array(x, dtype=float)
+
+                xpp[i] += h
+                xpp[j] += h
+
+                xpm[i] += h
+                xpm[j] -= h
+
+                xmp[i] -= h
+                xmp[j] += h
+
+                xmm[i] -= h
+                xmm[j] -= h
+
+                H[i, j] = (
+                    f(xpp)
+                    - f(xpm)
+                    - f(xmp)
+                    + f(xmm)
+                ) / (4*h*h)
+
+    return H
+
+
+
+x = np.array([3.0, 1.0])
+
+eps1 = 1e-4
+eps2 = 1e-4
+
+M = 100
+
+k = 0
+
+while True:
+    print(f'k = {k}')
+    g = grad(x)
+    print(f'Градиент в точке {x} = {g}')
+
+    if np.linalg.norm(g) < eps1:
+        print(f'Норма градиента в точке {x} < {eps1} ======> x* = {x}')
+        break
+
+    if k >= M:
+        print(f'k >= {M} ======> x* = {x}')
+        break
+
+    H = hessian(x)
+
+    print(f"\nМатрица Гессе H(x{k}):")
+    print(H)
+
+    H_inv = np.linalg.inv(H)
+
+    print(f"\nH^-1(x{k}):")
+    print(H_inv)
+
+    if np.all(np.linalg.eigvals(H_inv) > 0):
+        d = -H_inv @ g
+        
+        print(f"\nH^-1 > 0 ======> d{k} = {d}, t{k} = 1")
+        t = 1.0
+
+    else:
+        d = -g
+        t = 1.0
+        while f(x + t*d) >= f(x):
+            t /= 2
+        print(f"\nH^-1 не положительно определена======> d{k} = {d}, t{k} = {t}")
+    
+    x_new = x + t*d
+    print(f'x{k+1} = {x_new}')
+
+    if np.linalg.norm(x_new - x) < eps2 and abs(f(x_new) - f(x)) < eps2:
+        print('Условия выполнены, поиск завершен.')
+        print(f'x* = {x_new}')
+        break
+    else:
+        k += 1
+        x = x_new
+
+        
